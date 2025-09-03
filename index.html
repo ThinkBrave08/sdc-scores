@@ -315,6 +315,11 @@
         <p style="font-size: 12px; color: #666; margin: 5px 0;">This will automatically assign your existing players to the 10 matches</p>
     </div>
     
+    <div class="cleanup-matches" id="cleanupMatches" style="display: none; margin: 10px; text-align: center;">
+        <button onclick="cleanupEmptyMatches()" style="background-color: #ff6b6b; color: white;">Clean up empty matches</button>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">This will remove matches that don't have players assigned</p>
+    </div>
+    
     <div class="table-container">
         <table id="matchesTable">
             <thead>
@@ -503,14 +508,73 @@
                  // Populate par and handicap headers
                  populateHeaders();
                  
-                 // Set up real-time subscriptions for live updates
-                 setupRealtimeSubscriptions();
-                 
-             } catch (error) {
-                 console.error('Error loading data:', error);
-                 document.getElementById('matchesBody').innerHTML = '<tr><td class="error" colspan="22">Error loading data</td></tr>';
-             }
-         }
+                                 // Set up real-time subscriptions for live updates
+                setupRealtimeSubscriptions();
+                
+                // Check if there are empty matches and show cleanup button
+                checkForEmptyMatches();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('matchesBody').innerHTML = '<tr><td class="error" colspan="22">Error loading data</td></tr>';
+            }
+        }
+
+        // Check for empty matches and show cleanup button if needed
+        function checkForEmptyMatches() {
+            const emptyMatches = matches.filter(match => {
+                const matchPlayerA = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'A');
+                const matchPlayerB = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'B');
+                return !matchPlayerA?.player_id || !matchPlayerB?.player_id;
+            });
+            
+            if (emptyMatches.length > 0) {
+                document.getElementById('cleanupMatches').style.display = 'block';
+            } else {
+                document.getElementById('cleanupMatches').style.display = 'none';
+            }
+        }
+
+        // Clean up empty matches
+        async function cleanupEmptyMatches() {
+            try {
+                const emptyMatches = matches.filter(match => {
+                    const matchPlayerA = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'A');
+                    const matchPlayerB = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'B');
+                    return !matchPlayerA?.player_id || !matchPlayerB?.player_id;
+                });
+
+                if (emptyMatches.length === 0) {
+                    alert('No empty matches found.');
+                    return;
+                }
+
+                const confirmMessage = `Found ${emptyMatches.length} empty matches. This will delete them and keep only matches with players assigned. Continue?`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+
+                // Delete match_players for empty matches first
+                for (const match of emptyMatches) {
+                    await supabase.from('match_players').delete().eq('match_id', match.id);
+                    await supabase.from('match_holes').delete().eq('match_id', match.id);
+                }
+
+                // Delete the empty matches
+                const matchIds = emptyMatches.map(m => m.id);
+                await supabase.from('matches').delete().in('id', matchIds);
+
+                // Reload data
+                await loadData();
+                
+                document.getElementById('cleanupMatches').style.display = 'none';
+                alert(`Cleaned up ${emptyMatches.length} empty matches.`);
+                
+            } catch (error) {
+                console.error('Error cleaning up matches:', error);
+                alert('Error cleaning up matches: ' + error.message);
+            }
+        }
 
          // Set up real-time subscriptions for live updates
          function setupRealtimeSubscriptions() {
