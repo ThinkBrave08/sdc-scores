@@ -333,6 +333,8 @@
     
 
     
+
+    
     <div class="table-container">
         <table id="matchesTable">
             <thead>
@@ -543,25 +545,20 @@
                      { event: '*', schema: 'public', table: 'match_holes' },
                      (payload) => {
                          console.log('Score change detected:', payload);
-                         // Only update if this change came from another device
-                         // Check if the current user made this change
-                         const currentUser = supabase.auth.getUser();
-                         if (payload.new && payload.new.updated_by !== currentUser?.id) {
-                             // Update local scores array
-                             if (payload.eventType === 'INSERT') {
-                                 scores.push(payload.new);
-                             } else if (payload.eventType === 'UPDATE') {
-                                 const index = scores.findIndex(s => s.id === payload.new.id);
-                                 if (index !== -1) {
-                                     scores[index] = payload.new;
-                                 }
-                             } else if (payload.eventType === 'DELETE') {
-                                 scores = scores.filter(s => s.id !== payload.old.id);
+                         // Update local scores array
+                         if (payload.eventType === 'INSERT') {
+                             scores.push(payload.new);
+                         } else if (payload.eventType === 'UPDATE') {
+                             const index = scores.findIndex(s => s.id === payload.new.id);
+                             if (index !== -1) {
+                                 scores[index] = payload.new;
                              }
-                             // Re-render the matches
-                             renderMatches();
-                             updateTeamTotals();
+                         } else if (payload.eventType === 'DELETE') {
+                             scores = scores.filter(s => s.id !== payload.old.id);
                          }
+                         // Re-render the matches
+                         renderMatches();
+                         updateTeamTotals();
                      }
                  )
                  .subscribe();
@@ -735,6 +732,8 @@
                 alert('Error assigning players: ' + error.message);
             }
         }
+
+
         
                  // Render matches table - 20 rows (10 matches × 2 players each)
          function renderMatches() {
