@@ -532,17 +532,19 @@
                  const playerA = matchPlayerA ? players.find(p => p.id === matchPlayerA.player_id) : null;
                  const playerB = matchPlayerB ? players.find(p => p.id === matchPlayerB.player_id) : null;
                  
-                 // Determine which player is Prince and which is Bowman based on team field
-                 const princePlayer = matchPlayerA?.team === 'prince' ? playerA : matchPlayerB?.team === 'prince' ? playerB : null;
-                 const bowmanPlayer = matchPlayerA?.team === 'bowman' ? playerA : matchPlayerB?.team === 'bowman' ? playerB : null;
+                 // Determine which player is Prince and which is Bowman based on team_id
+                 const princePlayer = playerA?.team_id === teams.find(t => t.name === 'Prince')?.id ? playerA : 
+                                     playerB?.team_id === teams.find(t => t.name === 'Prince')?.id ? playerB : playerA;
+                 const bowmanPlayer = playerA?.team_id === teams.find(t => t.name === 'Bowman')?.id ? playerA : 
+                                     playerB?.team_id === teams.find(t => t.name === 'Bowman')?.id ? playerB : playerB;
                  
-                 // Fallback: if team field is missing, assume A=Prince, B=Bowman
-                 const princeHcap = princePlayer?.handicap || playerA?.handicap || 0;
-                 const bowmanHcap = bowmanPlayer?.handicap || playerB?.handicap || 0;
+                 // Use the actual players (fallback to side A/B if team field missing)
+                 const princeHcap = princePlayer?.handicap || 0;
+                 const bowmanHcap = bowmanPlayer?.handicap || 0;
                  
                  // Debug: Log handicaps for troubleshooting
                  console.log(`Match ${matchIndex + 1}: Prince handicap: ${princeHcap}, Bowman handicap: ${bowmanHcap}`);
-                 console.log(`Team assignments: A=${matchPlayerA?.team}, B=${matchPlayerB?.team}`);
+                 console.log(`Team assignments: A=${playerA?.team_id}, B=${playerB?.team_id}`);
                  console.log(`Players: Prince=${princePlayer?.name || princePlayer?.display_name}, Bowman=${bowmanPlayer?.name || bowmanPlayer?.display_name}`);
                  
                  const strokeData = calculateStrokes(princeHcap, bowmanHcap);
@@ -552,8 +554,8 @@
                  princeRow.className = 'prince-bg';
                  
                  // Determine which side the Prince player is on
-                 const princeSide = matchPlayerA?.team === 'prince' ? 'A' : 'B';
-                 const bowmanSide = matchPlayerA?.team === 'bowman' ? 'A' : 'B';
+                 const princeSide = princePlayer === playerA ? 'A' : 'B';
+                 const bowmanSide = bowmanPlayer === playerA ? 'A' : 'B';
                  
                  let princeRowHTML = `
                      <td>${matchIndex + 1}</td>
