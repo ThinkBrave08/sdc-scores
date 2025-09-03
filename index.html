@@ -289,7 +289,7 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <div class="team-totals" id="teamTotals">Prince 2.0 — 0.0 Bowman</div>
             <div class="magic-button" id="magicButton" title="Magic button">
-                <img src="wolverines.svg" alt="M">
+                <img src="public/wolverines.svg" alt="M">
             </div>
         </div>
     </div>
@@ -380,7 +380,7 @@
     </div>
     
     <audio id="fightSong" preload="auto">
-        <source src="victors.mp3" type="audio/mpeg">
+        <source src="public/victors.mp3" type="audio/mpeg">
     </audio>
     
     <script>
@@ -555,7 +555,7 @@
                  let princeRowHTML = `
                      <td>${matchIndex + 1}</td>
                      <td>
-                         <input class="player-input" placeholder="Prince Name" value="${princePlayer?.display_name || ''}" 
+                         <input class="player-input" placeholder="Prince Name" value="${princePlayer?.name || princePlayer?.display_name || ''}" 
                                 onblur="updatePlayer('${match.id}', '${princeSide}', this.value, ${princeHcap})" ${readOnly ? 'disabled' : ''}>
                          <input class="handicap-input" type="number" value="${princeHcap}" 
                                 onblur="updatePlayer('${match.id}', '${princeSide}', '${princePlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
@@ -624,7 +624,7 @@
                  let bowmanRowHTML = `
                      <td></td>
                      <td>
-                         <input class="player-input" placeholder="Bowman Name" value="${bowmanPlayer?.display_name || ''}" 
+                         <input class="player-input" placeholder="Bowman Name" value="${bowmanPlayer?.name || bowmanPlayer?.display_name || ''}" 
                                 onblur="updatePlayer('${match.id}', '${bowmanSide}', this.value, ${bowmanHcap})" ${readOnly ? 'disabled' : ''}>
                          <input class="handicap-input" type="number" value="${bowmanHcap}" 
                                 onblur="updatePlayer('${match.id}', '${bowmanSide}', '${bowmanPlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
@@ -728,7 +728,7 @@
                 if (!team) return;
                 
                 // Find or create player
-                let player = players.find(p => p.display_name === name.trim());
+                let player = players.find(p => p.display_name === name.trim() || p.name === name.trim());
                 if (player) {
                     // Update existing player
                     await supabase.from('players').update({ handicap, team_id: team.id }).eq('id', player.id);
