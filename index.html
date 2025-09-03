@@ -791,6 +791,7 @@
             
             try {
                 const score = value !== '' ? parseInt(value) : null;
+                console.log(`Updating score: value="${value}", parsed=${score}`);
                 
                 // Find existing score
                 const existing = scores.find(s => s.match_id === matchId && s.hole_number === holeNumber);
@@ -808,8 +809,8 @@
                     const newScore = {
                         match_id: matchId,
                         hole_number: holeNumber,
-                        side_a_gross: side === 'A' ? score : null,
-                        side_b_gross: side === 'B' ? score : null
+                        side_a_gross: side === 'A' ? score : undefined,
+                        side_b_gross: side === 'B' ? score : undefined
                     };
                     
                     const { data } = await supabase.from('match_holes').insert(newScore).select('*').single();
