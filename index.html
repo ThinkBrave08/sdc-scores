@@ -289,7 +289,7 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <div class="team-totals" id="teamTotals">Prince 2.0 — 0.0 Bowman</div>
             <div class="magic-button" id="magicButton" title="Magic button">
-                <img src="public/wolverines.svg" alt="M">
+                <img src="wolverines.svg" alt="M">
             </div>
         </div>
     </div>
@@ -380,7 +380,7 @@
     </div>
     
     <audio id="fightSong" preload="auto">
-        <source src="public/victors.mp3" type="audio/mpeg">
+        <source src="victors.mp3" type="audio/mpeg">
     </audio>
     
     <script>
@@ -468,6 +468,8 @@
                 matchPlayers = matchPlayersResult.data || [];
                 scores = scoresResult.data || [];
                 players = playersResult.data || [];
+                console.log('Loaded players:', players);
+                console.log('Loaded matchPlayers:', matchPlayers);
                 
                 if (leagueStateResult.data) {
                     basePrince = leagueStateResult.data.base_prince_points || 1;
@@ -541,6 +543,7 @@
                  // Debug: Log handicaps for troubleshooting
                  console.log(`Match ${matchIndex + 1}: Prince handicap: ${princeHcap}, Bowman handicap: ${bowmanHcap}`);
                  console.log(`Team assignments: A=${matchPlayerA?.team}, B=${matchPlayerB?.team}`);
+                 console.log(`Players: Prince=${princePlayer?.name || princePlayer?.display_name}, Bowman=${bowmanPlayer?.name || bowmanPlayer?.display_name}`);
                  
                  const strokeData = calculateStrokes(princeHcap, bowmanHcap);
                  
