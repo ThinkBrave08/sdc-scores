@@ -168,15 +168,22 @@
             font-size: 16px;
         }
         
-                 .handicap-input {
-             width: 60px;
-             height: 36px;
-             border: 1px solid #ccc;
-             border-radius: 2px;
-             text-align: center;
-             margin: 2px;
-             font-size: 16px;
-         }
+                         .handicap-input {
+            width: 60px;
+            height: 36px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            text-align: center;
+            margin: 2px;
+            font-size: 16px;
+            -moz-appearance: textfield;
+        }
+        
+        .handicap-input::-webkit-outer-spin-button,
+        .handicap-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
          
          .hole-info {
              text-align: center;
@@ -330,6 +337,8 @@
         <button onclick="assignExistingPlayers()">Assign existing players to matches</button>
         <p style="font-size: 12px; color: #666; margin: 5px 0;">This will automatically assign your existing players to the 10 matches</p>
     </div>
+    
+
     
 
     
@@ -734,6 +743,7 @@
         }
 
 
+
         
                  // Render matches table - 20 rows (10 matches × 2 players each)
          function renderMatches() {
@@ -778,7 +788,7 @@
                          <input class="player-input" placeholder="Prince Name" value="${princePlayer?.name || princePlayer?.display_name || ''}" 
                                 onblur="updatePlayer('${match.id}', '${princeSide}', this.value, ${princeHcap})" ${readOnly ? 'disabled' : ''}>
                          <input class="handicap-input" type="number" value="${princeHcap}" 
-                                onblur="updatePlayer('${match.id}', '${princeSide}', '${princePlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                onclick="this.select()" onblur="updatePlayer('${match.id}', '${princeSide}', '${princePlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
                      </td>
                  `;
                  
@@ -848,7 +858,7 @@
                          <input class="player-input" placeholder="Bowman Name" value="${bowmanPlayer?.name || bowmanPlayer?.display_name || ''}" 
                                 onblur="updatePlayer('${match.id}', '${bowmanSide}', this.value, ${bowmanHcap})" ${readOnly ? 'disabled' : ''}>
                          <input class="handicap-input" type="number" value="${bowmanHcap}" 
-                                onblur="updatePlayer('${match.id}', '${bowmanSide}', '${bowmanPlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                onclick="this.select()" onblur="updatePlayer('${match.id}', '${bowmanSide}', '${bowmanPlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
                      </td>
                  `;
                  
