@@ -197,10 +197,26 @@
         .stroke-dot-inline {
             position: absolute;
             bottom: 2px;
-            right: 20px;
-            font-size: 18px;
+            right: 15px;
+            font-size: 22px;
             color: #666;
             pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .stroke-dot-inline {
+                right: 8px;
+                font-size: 16px;
+                bottom: 1px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stroke-dot-inline {
+                right: 4px;
+                font-size: 14px;
+                bottom: 1px;
+            }
         }
          
          .hole-input.winner {
@@ -789,7 +805,7 @@
                                  <div class="hole-handicap"></div>
                              </div>
                              <div style="position: relative;">
-                                 <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross !== null && princeGross !== undefined ? princeGross : ''}" 
+                                 <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross !== null && princeGross !== undefined ? String(princeGross) : ''}" 
                                         onclick="selectCell(this)" onblur="updateScore('${match.id}', ${hole.hole_number}, '${princeSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${princeGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
@@ -859,7 +875,7 @@
                                  <div class="hole-handicap"></div>
                              </div>
                              <div style="position: relative;">
-                                 <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross !== null && bowmanGross !== undefined ? bowmanGross : ''}" 
+                                 <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross !== null && bowmanGross !== undefined ? String(bowmanGross) : ''}" 
                                         onclick="selectCell(this)" onblur="updateScore('${match.id}', ${hole.hole_number}, '${bowmanSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${bowmanGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
