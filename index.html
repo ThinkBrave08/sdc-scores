@@ -416,23 +416,29 @@
         
         // Audio functions
         function playFullFightSong() {
+            console.log('Attempting to play full fight song...');
+            console.log('Audio element:', fightSong);
+            console.log('Audio src:', fightSong.src);
             fightSong.currentTime = 0; // Start from beginning
             fightSong.play().then(() => {
+                console.log('Fight song playing successfully');
                 isPlaying = true;
-            }).catch(() => {
-                console.log('Audio file not found');
+            }).catch((error) => {
+                console.log('Audio play failed:', error);
             });
         }
         
         function playFightSongClip() {
+            console.log('Attempting to play fight song clip...');
             fightSong.currentTime = 0; // Start from beginning
             fightSong.play().then(() => {
+                console.log('Fight song clip playing');
                 // Stop after 3 seconds
                 setTimeout(() => {
                     fightSong.pause();
                 }, 3000);
-            }).catch(() => {
-                console.log('Fight song not available');
+            }).catch((error) => {
+                console.log('Fight song clip failed:', error);
             });
         }
         
@@ -588,7 +594,7 @@
                                  <div class="hole-handicap"></div>
                              </div>
                              <div style="position: relative;">
-                                 <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross || ''}" 
+                                 <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross !== null && princeGross !== undefined ? princeGross : ''}" 
                                         onblur="updateScore('${match.id}', ${hole.hole_number}, '${princeSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${princeGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
@@ -657,7 +663,7 @@
                                  <div class="hole-handicap"></div>
                              </div>
                              <div style="position: relative;">
-                                 <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross || ''}" 
+                                 <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross !== null && bowmanGross !== undefined ? bowmanGross : ''}" 
                                         onblur="updateScore('${match.id}', ${hole.hole_number}, '${bowmanSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${bowmanGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
@@ -784,7 +790,7 @@
             if (readOnly) return;
             
             try {
-                const score = value ? parseInt(value) : null;
+                const score = value !== '' ? parseInt(value) : null;
                 
                 // Find existing score
                 const existing = scores.find(s => s.match_id === matchId && s.hole_number === holeNumber);
@@ -897,5 +903,5 @@
              }
          }
     </script>
-</body>
-</html>
+  </body>
+  </html>
