@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDC Ryder Cup Day 3</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            color: black;
+            padding: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 2px solid #ccc;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .team-totals {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .magic-button {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .magic-button img {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .create-matches {
+            margin-bottom: 20px;
+        }
+        
+        .create-matches button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .create-matches button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            min-width: 1200px;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+                 .prince-bg {
+             background: #E5E7EB;
+         }
+         
+         .bowman-bg {
+             background: #FFCB05;
+         }
+         
+         /* Remove row coloring - players are in columns, not rows */
+        
+        .hole-header {
+            text-align: center;
+            font-size: 12px;
+            padding: 4px 2px;
+        }
+        
+        .hole-inputs {
+            text-align: center;
+            padding: 2px;
+        }
+        
+        .hole-input {
+            width: 50px;
+            height: 36px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            text-align: center;
+            margin: 1px 0;
+            font-size: 16px;
+        }
+        
+                 .stroke-dot {
+             position: absolute;
+             right: -8px;
+             top: 8px;
+             font-size: 120px;
+             color: #666;
+         }
+        
+        .hole-result {
+            font-size: 10px;
+            margin-top: 2px;
+            color: #666;
+        }
+        
+        .player-input {
+            width: 140px;
+            height: 36px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            padding: 6px;
+            margin: 2px;
+            font-size: 16px;
+        }
+        
+                 .handicap-input {
+             width: 60px;
+             height: 36px;
+             border: 1px solid #ccc;
+             border-radius: 2px;
+             text-align: center;
+             margin: 2px;
+             font-size: 16px;
+         }
+         
+         .hole-info {
+             text-align: center;
+             padding: 2px;
+             font-size: 10px;
+         }
+         
+         .hole-number {
+             font-weight: bold;
+             color: #333;
+         }
+         
+         .hole-handicap {
+             color: #666;
+             font-size: 9px;
+         }
+        
+        .stroke-dot-inline {
+            position: absolute;
+            bottom: 2px;
+            right: 20px;
+            font-size: 18px;
+            color: #666;
+            pointer-events: none;
+        }
+         
+         .hole-input.winner {
+             background-color: #90EE90;
+         }
+        
+        .status {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+        }
+        
+        .error {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 20px;
+            }
+            
+            .team-totals {
+                font-size: 16px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+            }
+            
+            .hole-input {
+                width: 45px;
+                height: 32px;
+                font-size: 14px;
+            }
+            
+            .player-input {
+                width: 120px;
+                height: 32px;
+                font-size: 14px;
+            }
+            
+            .handicap-input {
+                width: 55px;
+                height: 32px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title {
+                font-size: 18px;
+            }
+            
+            .team-totals {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 4px 2px;
+            }
+            
+            .hole-input {
+                width: 40px;
+                height: 28px;
+                font-size: 12px;
+            }
+            
+            .player-input {
+                width: 100px;
+                height: 28px;
+                font-size: 12px;
+            }
+            
+            .handicap-input {
+                width: 50px;
+                height: 28px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">SDC Ryder Cup Day 3</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="team-totals" id="teamTotals">Prince 2.0 — 0.0 Bowman</div>
+            <div class="magic-button" id="magicButton" title="Magic button">
+                <img src="wolverines.svg" alt="M">
+            </div>
+        </div>
+    </div>
+    
+    <div class="create-matches" id="createMatches" style="display: none;">
+        <button onclick="createTodaysMatches()">Create today's 10 matches</button>
+    </div>
+    
+    <div class="table-container">
+        <table id="matchesTable">
+            <thead>
+                <tr>
+                    <th>Match</th>
+                    <th>Player: Name / HCP</th>
+                    <th class="hole-header">1<br><small>HCP</small></th>
+                    <th class="hole-header">2<br><small>HCP</small></th>
+                    <th class="hole-header">3<br><small>HCP</small></th>
+                    <th class="hole-header">4<br><small>HCP</small></th>
+                    <th class="hole-header">5<br><small>HCP</small></th>
+                    <th class="hole-header">6<br><small>HCP</small></th>
+                    <th class="hole-header">7<br><small>HCP</small></th>
+                    <th class="hole-header">8<br><small>HCP</small></th>
+                    <th class="hole-header">9<br><small>HCP</small></th>
+                    <th class="hole-header">10<br><small>HCP</small></th>
+                    <th class="hole-header">11<br><small>HCP</small></th>
+                    <th class="hole-header">12<br><small>HCP</small></th>
+                    <th class="hole-header">13<br><small>HCP</small></th>
+                    <th class="hole-header">14<br><small>HCP</small></th>
+                    <th class="hole-header">15<br><small>HCP</small></th>
+                    <th class="hole-header">16<br><small>HCP</small></th>
+                    <th class="hole-header">17<br><small>HCP</small></th>
+                    <th class="hole-header">18<br><small>HCP</small></th>
+                    <th>Result</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Par</th>
+                    <th class="hole-header" id="par-1">-</th>
+                    <th class="hole-header" id="par-2">-</th>
+                    <th class="hole-header" id="par-3">-</th>
+                    <th class="hole-header" id="par-4">-</th>
+                    <th class="hole-header" id="par-5">-</th>
+                    <th class="hole-header" id="par-6">-</th>
+                    <th class="hole-header" id="par-7">-</th>
+                    <th class="hole-header" id="par-8">-</th>
+                    <th class="hole-header" id="par-9">-</th>
+                    <th class="hole-header" id="par-10">-</th>
+                    <th class="hole-header" id="par-11">-</th>
+                    <th class="hole-header" id="par-12">-</th>
+                    <th class="hole-header" id="par-13">-</th>
+                    <th class="hole-header" id="par-14">-</th>
+                    <th class="hole-header" id="par-15">-</th>
+                    <th class="hole-header" id="par-16">-</th>
+                    <th class="hole-header" id="par-17">-</th>
+                    <th class="hole-header" id="par-18">-</th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>HCP</th>
+                    <th class="hole-header" id="hcp-1">-</th>
+                    <th class="hole-header" id="hcp-2">-</th>
+                    <th class="hole-header" id="hcp-3">-</th>
+                    <th class="hole-header" id="hcp-4">-</th>
+                    <th class="hole-header" id="hcp-5">-</th>
+                    <th class="hole-header" id="hcp-6">-</th>
+                    <th class="hole-header" id="hcp-7">-</th>
+                    <th class="hole-header" id="hcp-8">-</th>
+                    <th class="hole-header" id="hcp-9">-</th>
+                    <th class="hole-header" id="hcp-10">-</th>
+                    <th class="hole-header" id="hcp-11">-</th>
+                    <th class="hole-header" id="hcp-12">-</th>
+                    <th class="hole-header" id="hcp-13">-</th>
+                    <th class="hole-header" id="hcp-14">-</th>
+                    <th class="hole-header" id="hcp-15">-</th>
+                    <th class="hole-header" id="hcp-16">-</th>
+                    <th class="hole-header" id="hcp-17">-</th>
+                    <th class="hole-header" id="hcp-18">-</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="matchesBody">
+                <tr>
+                    <td class="loading" colspan="22">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <audio id="fightSong" preload="auto">
+        <source src="victors.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://gjkpuxnkukedvjrbkcml.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdqa3B1eG5rdWtlZHZqcmJrY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MTI4NDEsImV4cCI6MjA3MjM4ODg0MX0.Aq8tjMzseJr1EihkYdPPE3I56FeQN5D94cJzn56R7To';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Global state
+        let teams = [];
+        let players = [];
+        let matches = [];
+        let matchPlayers = [];
+        let holes = [];
+        let scores = [];
+        let basePrince = 1;
+        let baseBowman = 0;
+        let readOnly = false;
+        
+        // Audio
+        const fightSong = document.getElementById('fightSong');
+        const magicButton = document.getElementById('magicButton');
+        let isPlaying = false;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            readOnly = new URLSearchParams(window.location.search).get('ro') === '1';
+            await loadData();
+            renderMatches();
+            updateTeamTotals();
+        });
+        
+        // Audio functions
+        function playFullFightSong() {
+            fightSong.currentTime = 0; // Start from beginning
+            fightSong.play().then(() => {
+                isPlaying = true;
+            }).catch(() => {
+                console.log('Audio file not found');
+            });
+        }
+        
+        function playFightSongClip() {
+            fightSong.currentTime = 0; // Start from beginning
+            fightSong.play().then(() => {
+                // Stop after 3 seconds
+                setTimeout(() => {
+                    fightSong.pause();
+                }, 3000);
+            }).catch(() => {
+                console.log('Fight song not available');
+            });
+        }
+        
+        // Magic button
+        magicButton.addEventListener('click', () => {
+            if (isPlaying) {
+                fightSong.pause();
+                isPlaying = false;
+            } else {
+                playFullFightSong();
+            }
+        });
+        
+        // Load all data
+        async function loadData() {
+            try {
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                
+                const [teamsResult, holesResult, matchesResult, matchPlayersResult, scoresResult, leagueStateResult, playersResult] = await Promise.all([
+                    supabase.from('teams').select('*'),
+                    supabase.from('course_holes').select('hole_number,par,stroke_index').order('hole_number'),
+                    supabase.from('matches').select('*').eq('match_date', dateStr).order('id'),
+                    supabase.from('match_players').select('*'),
+                    supabase.from('match_holes').select('*'),
+                    supabase.from('league_state').select('*').maybeSingle(),
+                    supabase.from('players').select('*')
+                ]);
+                
+                teams = teamsResult.data || [];
+                holes = holesResult.data || [];
+                matches = matchesResult.data || [];
+                matchPlayers = matchPlayersResult.data || [];
+                scores = scoresResult.data || [];
+                players = playersResult.data || [];
+                
+                if (leagueStateResult.data) {
+                    basePrince = leagueStateResult.data.base_prince_points || 1;
+                    baseBowman = leagueStateResult.data.base_bowman_points || 0;
+                }
+                
+                                 if (matches.length === 0) {
+                     document.getElementById('createMatches').style.display = 'block';
+                 }
+                 
+                 // Populate par and handicap headers
+                 populateHeaders();
+                 
+             } catch (error) {
+                 console.error('Error loading data:', error);
+                 document.getElementById('matchesBody').innerHTML = '<tr><td class="error" colspan="22">Error loading data</td></tr>';
+             }
+         }
+         
+         // Populate par and handicap headers with database values
+         function populateHeaders() {
+             holes.forEach(hole => {
+                 const parElement = document.getElementById(`par-${hole.hole_number}`);
+                 const hcpElement = document.getElementById(`hcp-${hole.hole_number}`);
+                 
+                 if (parElement) parElement.textContent = hole.par;
+                 if (hcpElement) hcpElement.textContent = hole.stroke_index;
+             });
+         }
+        
+        // Create today's matches
+        async function createTodaysMatches() {
+            try {
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                
+                const matchData = Array.from({length: 10}, (_, i) => ({
+                    match_date: dateStr,
+                    counts: true
+                }));
+                
+                const { data } = await supabase.from('matches').insert(matchData).select('*');
+                matches = data || [];
+                document.getElementById('createMatches').style.display = 'none';
+                renderMatches();
+            } catch (error) {
+                console.error('Error creating matches:', error);
+            }
+        }
+        
+                 // Render matches table - 20 rows (10 matches × 2 players each)
+         function renderMatches() {
+             const tbody = document.getElementById('matchesBody');
+             tbody.innerHTML = '';
+             
+             matches.forEach((match, matchIndex) => {
+                 // Get players for this match
+                 const matchPlayerA = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'A');
+                 const matchPlayerB = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'B');
+                 const playerA = matchPlayerA ? players.find(p => p.id === matchPlayerA.player_id) : null;
+                 const playerB = matchPlayerB ? players.find(p => p.id === matchPlayerB.player_id) : null;
+                 
+                 // Determine which player is Prince and which is Bowman based on team field
+                 const princePlayer = matchPlayerA?.team === 'prince' ? playerA : matchPlayerB?.team === 'prince' ? playerB : null;
+                 const bowmanPlayer = matchPlayerA?.team === 'bowman' ? playerA : matchPlayerB?.team === 'bowman' ? playerB : null;
+                 
+                 // Fallback: if team field is missing, assume A=Prince, B=Bowman
+                 const princeHcap = princePlayer?.handicap || playerA?.handicap || 0;
+                 const bowmanHcap = bowmanPlayer?.handicap || playerB?.handicap || 0;
+                 
+                 // Debug: Log handicaps for troubleshooting
+                 console.log(`Match ${matchIndex + 1}: Prince handicap: ${princeHcap}, Bowman handicap: ${bowmanHcap}`);
+                 console.log(`Team assignments: A=${matchPlayerA?.team}, B=${matchPlayerB?.team}`);
+                 
+                 const strokeData = calculateStrokes(princeHcap, bowmanHcap);
+                 
+                 // Create Prince row (grey)
+                 const princeRow = document.createElement('tr');
+                 princeRow.className = 'prince-bg';
+                 
+                 // Determine which side the Prince player is on
+                 const princeSide = matchPlayerA?.team === 'prince' ? 'A' : 'B';
+                 const bowmanSide = matchPlayerA?.team === 'bowman' ? 'A' : 'B';
+                 
+                 let princeRowHTML = `
+                     <td>${matchIndex + 1}</td>
+                     <td>
+                         <input class="player-input" placeholder="Prince Name" value="${princePlayer?.display_name || ''}" 
+                                onblur="updatePlayer('${match.id}', '${princeSide}', this.value, ${princeHcap})" ${readOnly ? 'disabled' : ''}>
+                         <input class="handicap-input" type="number" value="${princeHcap}" 
+                                onblur="updatePlayer('${match.id}', '${princeSide}', '${princePlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
+                     </td>
+                 `;
+                 
+                 // Add Prince scores
+                 holes.forEach(hole => {
+                     const holeScore = scores.find(s => s.match_id === match.id && s.hole_number === hole.hole_number);
+                     const grossA = holeScore?.side_a_gross;
+                     const grossB = holeScore?.side_b_gross;
+                     
+                     // Get the correct gross score for Prince
+                     const princeGross = princeSide === 'A' ? grossA : grossB;
+                     const bowmanGross = bowmanSide === 'A' ? grossA : grossB;
+                     
+                     const princeGetsStroke = strokeData.princeGets.has(hole.hole_number);
+                     const result = calculateHoleResult(princeGross, bowmanGross, princeGetsStroke, strokeData.bowmanGets.has(hole.hole_number));
+                     const princeWinner = result === 'A';
+                     
+                     princeRowHTML += `
+                         <td class="hole-inputs">
+                             <div class="hole-info">
+                                 <div class="hole-number">${hole.hole_number}</div>
+                                 <div class="hole-handicap"></div>
+                             </div>
+                             <div style="position: relative;">
+                                 <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross || ''}" 
+                                        onblur="updateScore('${match.id}', ${hole.hole_number}, '${princeSide}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                 ${princeGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
+                             </div>
+                         </td>
+                     `;
+                 });
+                 
+                 // Calculate margin first
+                 let margin = 0;
+                 holes.forEach(hole => {
+                     const holeScore = scores.find(s => s.match_id === match.id && s.hole_number === hole.hole_number);
+                     const grossA = holeScore?.side_a_gross;
+                     const grossB = holeScore?.side_b_gross;
+                     
+                     const princeGetsStroke = strokeData.princeGets.has(hole.hole_number);
+                     const result = calculateHoleResult(grossA, grossB, princeGetsStroke, strokeData.bowmanGets.has(hole.hole_number));
+                     
+                     if (result === 'A') margin++;
+                     else if (result === 'B') margin--;
+                 });
+                 
+                 const status = margin === 0 ? 'E' : margin > 0 ? `P ${margin}-up` : `B ${-margin}-up`;
+                 
+                 // Add status to Prince row
+                 if (margin > 0) {
+                     princeRowHTML += `<td class="status">${status}</td>`;
+                 } else {
+                     princeRowHTML += `<td class="status"></td>`;
+                 }
+                 
+                 princeRow.innerHTML = princeRowHTML;
+                 tbody.appendChild(princeRow);
+                 
+                 // Create Bowman row (yellow)
+                 const bowmanRow = document.createElement('tr');
+                 bowmanRow.className = 'bowman-bg';
+                 
+                 let bowmanRowHTML = `
+                     <td></td>
+                     <td>
+                         <input class="player-input" placeholder="Bowman Name" value="${bowmanPlayer?.display_name || ''}" 
+                                onblur="updatePlayer('${match.id}', '${bowmanSide}', this.value, ${bowmanHcap})" ${readOnly ? 'disabled' : ''}>
+                         <input class="handicap-input" type="number" value="${bowmanHcap}" 
+                                onblur="updatePlayer('${match.id}', '${bowmanSide}', '${bowmanPlayer?.display_name || ''}', this.value)" ${readOnly ? 'disabled' : ''}>
+                     </td>
+                 `;
+                 
+                 // Add Bowman scores
+                 holes.forEach(hole => {
+                     const holeScore = scores.find(s => s.match_id === match.id && s.hole_number === hole.hole_number);
+                     const grossA = holeScore?.side_a_gross;
+                     const grossB = holeScore?.side_b_gross;
+                     
+                     // Get the correct gross score for Bowman
+                     const princeGross = princeSide === 'A' ? grossA : grossB;
+                     const bowmanGross = bowmanSide === 'A' ? grossA : grossB;
+                     
+                     const bowmanGetsStroke = strokeData.bowmanGets.has(hole.hole_number);
+                     const result = calculateHoleResult(princeGross, bowmanGross, strokeData.princeGets.has(hole.hole_number), bowmanGetsStroke);
+                     const bowmanWinner = result === 'B';
+                     
+                     bowmanRowHTML += `
+                         <td class="hole-inputs">
+                             <div class="hole-info">
+                                 <div class="hole-number">${hole.hole_number}</div>
+                                 <div class="hole-handicap"></div>
+                             </div>
+                             <div style="position: relative;">
+                                 <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross || ''}" 
+                                        onblur="updateScore('${match.id}', ${hole.hole_number}, '${bowmanSide}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                 ${bowmanGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
+                             </div>
+                         </td>
+                     `;
+                 });
+                 
+                 // Add status to Bowman row
+                 if (margin <= 0) {
+                     bowmanRowHTML += `<td class="status">${status}</td>`;
+                 } else {
+                     bowmanRowHTML += `<td class="status"></td>`;
+                 }
+                 bowmanRow.innerHTML = bowmanRowHTML;
+                 tbody.appendChild(bowmanRow);
+             });
+         }
+        
+                 // Calculate strokes (handles plus handicaps)
+         function calculateStrokes(princeHcap, bowmanHcap) {
+             const diff = Math.abs(princeHcap - bowmanHcap);
+             if (!diff) return { princeGets: new Set(), bowmanGets: new Set() };
+             
+             // The higher handicap (worse player) gets strokes
+             const princeGetsStrokes = princeHcap > bowmanHcap;
+             const stroked = new Set();
+             
+             holes.forEach(hole => {
+                 if (hole.stroke_index <= diff) {
+                     stroked.add(hole.hole_number);
+                 }
+             });
+             
+             // Debug: Log stroke calculation
+             console.log(`Stroke calculation: Prince ${princeHcap} vs Bowman ${bowmanHcap}, diff: ${diff}, Prince gets strokes: ${princeGetsStrokes}, Stroked holes:`, Array.from(stroked));
+             
+             return princeGetsStrokes ? { princeGets: stroked, bowmanGets: new Set() } : { princeGets: new Set(), bowmanGets: stroked };
+         }
+         
+         // Get handicap adjustment for a hole
+         function getHoleHandicap(holeNumber, hcapA, hcapB) {
+             const diff = Math.abs(hcapA - hcapB);
+             if (!diff) return '';
+             
+             const hole = holes.find(h => h.hole_number === holeNumber);
+             if (!hole) return '';
+             
+             if (hole.stroke_index <= diff) {
+                 return hcapA > hcapB ? hcapA : hcapB;
+             }
+             return '';
+         }
+        
+        // Calculate hole result
+        function calculateHoleResult(grossA, grossB, aGetsStroke, bGetsStroke) {
+            if (!grossA || !grossB) return 'pending';
+            
+            const netA = grossA - (aGetsStroke ? 1 : 0);
+            const netB = grossB - (bGetsStroke ? 1 : 0);
+            
+            if (netA < netB) return 'A';
+            if (netB < netA) return 'B';
+            return 'AS';
+        }
+        
+        // Update player
+        async function updatePlayer(matchId, side, name, handicap) {
+            if (readOnly || !name.trim()) return;
+            
+            try {
+                const teamName = side === 'A' ? 'Prince' : 'Bowman';
+                const team = teams.find(t => t.name === teamName);
+                if (!team) return;
+                
+                // Find or create player
+                let player = players.find(p => p.display_name === name.trim());
+                if (player) {
+                    // Update existing player
+                    await supabase.from('players').update({ handicap, team_id: team.id }).eq('id', player.id);
+                    player.handicap = handicap;
+                    player.team_id = team.id;
+                } else {
+                    // Create new player
+                    const { data } = await supabase.from('players').insert({
+                        display_name: name.trim(),
+                        handicap,
+                        team_id: team.id
+                    }).select('*').single();
+                    
+                    if (data) {
+                        players.push(data);
+                        player = data;
+                    }
+                }
+                
+                if (player) {
+                    // Update match player
+                    const existing = matchPlayers.find(mp => mp.match_id === matchId && mp.side === side);
+                    if (existing) {
+                        await supabase.from('match_players').update({ player_id: player.id }).eq('id', existing.id);
+                        existing.player_id = player.id;
+                    } else {
+                        const { data } = await supabase.from('match_players').insert({
+                            match_id: matchId,
+                            player_id: player.id,
+                            side
+                        }).select('*').single();
+                        
+                        if (data) {
+                            matchPlayers.push(data);
+                        }
+                    }
+                }
+                
+                renderMatches();
+                updateTeamTotals();
+            } catch (error) {
+                console.error('Error updating player:', error);
+            }
+        }
+        
+        // Update score
+        async function updateScore(matchId, holeNumber, side, value) {
+            if (readOnly) return;
+            
+            try {
+                const score = value ? parseInt(value) : null;
+                
+                // Find existing score
+                const existing = scores.find(s => s.match_id === matchId && s.hole_number === holeNumber);
+                
+                if (existing) {
+                    // Update existing
+                    const updateData = side === 'A' 
+                        ? { side_a_gross: score }
+                        : { side_b_gross: score };
+                    
+                    await supabase.from('match_holes').update(updateData).eq('id', existing.id);
+                    Object.assign(existing, updateData);
+                } else {
+                    // Create new
+                    const newScore = {
+                        match_id: matchId,
+                        hole_number: holeNumber,
+                        side_a_gross: side === 'A' ? score : null,
+                        side_b_gross: side === 'B' ? score : null
+                    };
+                    
+                    const { data } = await supabase.from('match_holes').insert(newScore).select('*').single();
+                    if (data) {
+                        scores.push(data);
+                    }
+                }
+                
+                // Check if Bowman won the hole and play fight song
+                if (score && existing) {
+                    const otherScore = side === 'A' ? existing.side_b_gross : existing.side_a_gross;
+                    if (otherScore) {
+                        const match = matches.find(m => m.id === matchId);
+                        const matchPlayerA = matchPlayers.find(mp => mp.match_id === matchId && mp.side === 'A');
+                        const matchPlayerB = matchPlayers.find(mp => mp.match_id === matchId && mp.side === 'B');
+                        const playerA = matchPlayerA ? players.find(p => p.id === matchPlayerA.player_id) : null;
+                        const playerB = matchPlayerB ? players.find(p => p.id === matchPlayerB.player_id) : null;
+                        
+                        const hcapA = playerA?.handicap || 0;
+                        const hcapB = playerB?.handicap || 0;
+                        const strokeData = calculateStrokes(hcapA, hcapB);
+                        
+                        const hole = holes.find(h => h.hole_number === holeNumber);
+                        const princeGetsStroke = strokeData.princeGets.has(holeNumber);
+                        const bowmanGetsStroke = strokeData.bowmanGets.has(holeNumber);
+                        
+                        const grossA = side === 'A' ? score : existing.side_a_gross;
+                        const grossB = side === 'B' ? score : existing.side_b_gross;
+                        
+                        const result = calculateHoleResult(grossA, grossB, princeGetsStroke, bowmanGetsStroke);
+                        
+                        if (result === 'B') {
+                            // Bowman won the hole - play fight song clip!
+                            playFightSongClip();
+                        }
+                    }
+                }
+                
+                renderMatches();
+                updateTeamTotals();
+            } catch (error) {
+                console.error('Error updating score:', error);
+            }
+        }
+        
+                 // Update team totals (net scores only)
+         function updateTeamTotals() {
+             let princeTotal = basePrince;
+             let bowmanTotal = baseBowman;
+             
+             matches.forEach(match => {
+                 const matchPlayerA = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'A');
+                 const matchPlayerB = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'B');
+                 const playerA = matchPlayerA ? players.find(p => p.id === matchPlayerA.player_id) : null;
+                 const playerB = matchPlayerB ? players.find(p => p.id === matchPlayerB.player_id) : null;
+                 
+                 if (!playerA || !playerB || !match.counts) return;
+                 
+                 const hcapA = playerA.handicap || 0;
+                 const hcapB = playerB.handicap || 0;
+                 const strokeData = calculateStrokes(hcapA, hcapB);
+                 
+                 let margin = 0;
+                 holes.forEach(hole => {
+                     const holeScore = scores.find(s => s.match_id === match.id && s.hole_number === hole.hole_number);
+                     if (holeScore?.side_a_gross && holeScore?.side_b_gross) {
+                         // Calculate net scores
+                         const netA = holeScore.side_a_gross - (strokeData.princeGets.has(hole.hole_number) ? 1 : 0);
+                         const netB = holeScore.side_b_gross - (strokeData.bowmanGets.has(hole.hole_number) ? 1 : 0);
+                         
+                         if (netA < netB) margin++;
+                         else if (netB < netA) margin--;
+                     }
+                 });
+                 
+                 if (margin > 0) princeTotal += 1;
+                 else if (margin < 0) bowmanTotal += 1;
+                 else {
+                     princeTotal += 0.5;
+                     bowmanTotal += 0.5;
+                 }
+             });
+             
+             const margin = princeTotal - bowmanTotal;
+             if (margin > 0) {
+                 document.getElementById('teamTotals').textContent = `Prince up ${margin.toFixed(1)}`;
+             } else if (margin < 0) {
+                 document.getElementById('teamTotals').textContent = `Bowman up ${Math.abs(margin).toFixed(1)}`;
+             } else {
+                 document.getElementById('teamTotals').textContent = `All Square`;
+             }
+         }
+    </script>
+</body>
+</html>

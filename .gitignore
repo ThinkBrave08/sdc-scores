@@ -1,14 +1,9 @@
-# Next/Node
 node_modules/
 .next/
 out/
 dist/
-.cache/
-.turbo/
 .vercel/
-coverage/
-
-# Env / OS
+.turbo/
 .env*
 !.env.example
 .DS_Store
