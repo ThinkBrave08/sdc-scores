@@ -310,6 +310,11 @@
         <button onclick="createTodaysMatches()">Create today's 10 matches</button>
     </div>
     
+    <div class="assign-players" id="assignPlayers" style="display: none; margin: 10px; text-align: center;">
+        <button onclick="assignExistingPlayers()">Assign existing players to matches</button>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">This will automatically assign your existing players to the 10 matches</p>
+    </div>
+    
     <div class="table-container">
         <table id="matchesTable">
             <thead>
@@ -467,13 +472,10 @@
         // Load all data
         async function loadData() {
             try {
-                const today = new Date();
-                const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-                
                 const [teamsResult, holesResult, matchesResult, matchPlayersResult, scoresResult, leagueStateResult, playersResult] = await Promise.all([
                     supabase.from('teams').select('*'),
                     supabase.from('course_holes').select('hole_number,par,stroke_index').order('hole_number'),
-                    supabase.from('matches').select('*').eq('match_date', dateStr).order('id'),
+                    supabase.from('matches').select('*').order('id'),
                     supabase.from('match_players').select('*'),
                     supabase.from('match_holes').select('*'),
                     supabase.from('league_state').select('*').maybeSingle(),
@@ -608,12 +610,102 @@
                     counts: true
                 }));
                 
-                const { data } = await supabase.from('matches').insert(matchData).select('*');
-                matches = data || [];
+                const { data: newMatches } = await supabase.from('matches').insert(matchData).select('*');
+                matches = newMatches || [];
+                
+                // Create match_players records for each match
+                const matchPlayerData = [];
+                newMatches.forEach((match, matchIndex) => {
+                    // For now, create empty match_players records
+                    // Users will need to assign players manually
+                    matchPlayerData.push(
+                        { match_id: match.id, side: 'A', player_id: null },
+                        { match_id: match.id, side: 'B', player_id: null }
+                    );
+                });
+                
+                await supabase.from('match_players').insert(matchPlayerData);
+                
+                // Reload all data to get the new match_players
+                await loadData();
+                
                 document.getElementById('createMatches').style.display = 'none';
-                renderMatches();
+                document.getElementById('assignPlayers').style.display = 'block';
             } catch (error) {
                 console.error('Error creating matches:', error);
+            }
+        }
+
+        // Assign existing players to matches
+        async function assignExistingPlayers() {
+            try {
+                // Get all players
+                const { data: allPlayers } = await supabase.from('players').select('*');
+                if (!allPlayers || allPlayers.length === 0) {
+                    alert('No players found in database. Please add players first.');
+                    return;
+                }
+
+                // Get Prince and Bowman team IDs
+                const princeTeam = teams.find(t => t.name === 'Prince');
+                const bowmanTeam = teams.find(t => t.name === 'Bowman');
+                
+                if (!princeTeam || !bowmanTeam) {
+                    alert('Teams not found. Please check your database setup.');
+                    return;
+                }
+
+                // Separate players by team
+                const princePlayers = allPlayers.filter(p => p.team_id === princeTeam.id);
+                const bowmanPlayers = allPlayers.filter(p => p.team_id === bowmanTeam.id);
+
+                if (princePlayers.length === 0 || bowmanPlayers.length === 0) {
+                    alert('Players need to be assigned to teams. Please check your player data.');
+                    return;
+                }
+
+                // Create match_players assignments
+                const matchPlayerUpdates = [];
+                
+                matches.forEach((match, matchIndex) => {
+                    // Assign Prince player (cycle through available players)
+                    const princePlayer = princePlayers[matchIndex % princePlayers.length];
+                    // Assign Bowman player (cycle through available players)
+                    const bowmanPlayer = bowmanPlayers[matchIndex % bowmanPlayers.length];
+                    
+                    // Find existing match_players records
+                    const princeMatchPlayer = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'A');
+                    const bowmanMatchPlayer = matchPlayers.find(mp => mp.match_id === match.id && mp.side === 'B');
+                    
+                    if (princeMatchPlayer) {
+                        matchPlayerUpdates.push({
+                            id: princeMatchPlayer.id,
+                            player_id: princePlayer.id
+                        });
+                    }
+                    
+                    if (bowmanMatchPlayer) {
+                        matchPlayerUpdates.push({
+                            id: bowmanMatchPlayer.id,
+                            player_id: bowmanPlayer.id
+                        });
+                    }
+                });
+
+                // Update all match_players records
+                for (const update of matchPlayerUpdates) {
+                    await supabase.from('match_players').update({ player_id: update.player_id }).eq('id', update.id);
+                }
+
+                // Reload data to show the assignments
+                await loadData();
+                
+                document.getElementById('assignPlayers').style.display = 'none';
+                alert('Players assigned successfully!');
+                
+            } catch (error) {
+                console.error('Error assigning players:', error);
+                alert('Error assigning players: ' + error.message);
             }
         }
         
