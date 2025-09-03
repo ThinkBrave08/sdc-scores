@@ -527,20 +527,25 @@
                      { event: '*', schema: 'public', table: 'match_holes' },
                      (payload) => {
                          console.log('Score change detected:', payload);
-                         // Update local scores array
-                         if (payload.eventType === 'INSERT') {
-                             scores.push(payload.new);
-                         } else if (payload.eventType === 'UPDATE') {
-                             const index = scores.findIndex(s => s.id === payload.new.id);
-                             if (index !== -1) {
-                                 scores[index] = payload.new;
+                         // Only update if this change came from another device
+                         // Check if the current user made this change
+                         const currentUser = supabase.auth.getUser();
+                         if (payload.new && payload.new.updated_by !== currentUser?.id) {
+                             // Update local scores array
+                             if (payload.eventType === 'INSERT') {
+                                 scores.push(payload.new);
+                             } else if (payload.eventType === 'UPDATE') {
+                                 const index = scores.findIndex(s => s.id === payload.new.id);
+                                 if (index !== -1) {
+                                     scores[index] = payload.new;
+                                 }
+                             } else if (payload.eventType === 'DELETE') {
+                                 scores = scores.filter(s => s.id !== payload.old.id);
                              }
-                         } else if (payload.eventType === 'DELETE') {
-                             scores = scores.filter(s => s.id !== payload.old.id);
+                             // Re-render the matches
+                             renderMatches();
+                             updateTeamTotals();
                          }
-                         // Re-render the matches
-                         renderMatches();
-                         updateTeamTotals();
                      }
                  )
                  .subscribe();
@@ -770,6 +775,7 @@
                      
                      // Get the correct gross score for Prince
                      const princeGross = princeSide === 'A' ? grossA : grossB;
+                     console.log(`Hole ${hole.hole_number} Prince: grossA=${grossA}, grossB=${grossB}, princeSide=${princeSide}, princeGross=${princeGross}`);
                      const bowmanGross = bowmanSide === 'A' ? grossA : grossB;
                      
                      const princeGetsStroke = strokeData.princeGets.has(hole.hole_number);
@@ -840,6 +846,7 @@
                      // Get the correct gross score for Bowman
                      const princeGross = princeSide === 'A' ? grossA : grossB;
                      const bowmanGross = bowmanSide === 'A' ? grossA : grossB;
+                     console.log(`Hole ${hole.hole_number} Bowman: grossA=${grossA}, grossB=${grossB}, bowmanSide=${bowmanSide}, bowmanGross=${bowmanGross}`);
                      
                      const bowmanGetsStroke = strokeData.bowmanGets.has(hole.hole_number);
                      const result = calculateHoleResult(princeGross, bowmanGross, strokeData.princeGets.has(hole.hole_number), bowmanGetsStroke);
