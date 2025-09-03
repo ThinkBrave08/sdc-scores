@@ -130,6 +130,18 @@
             text-align: center;
             margin: 1px 0;
             font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .hole-input:focus {
+            background: rgba(255, 255, 0, 0.3);
+            border-color: #ff6b6b;
+            outline: none;
+        }
+        
+        .hole-input.selected {
+            background: rgba(255, 255, 0, 0.5);
+            border-color: #ff6b6b;
         }
         
                  .stroke-dot {
@@ -489,10 +501,89 @@
                  // Populate par and handicap headers
                  populateHeaders();
                  
+                 // Set up real-time subscriptions for live updates
+                 setupRealtimeSubscriptions();
+                 
              } catch (error) {
                  console.error('Error loading data:', error);
                  document.getElementById('matchesBody').innerHTML = '<tr><td class="error" colspan="22">Error loading data</td></tr>';
              }
+         }
+
+         // Set up real-time subscriptions for live updates
+         function setupRealtimeSubscriptions() {
+             // Subscribe to match_holes changes (scores)
+             supabase
+                 .channel('match_holes_changes')
+                 .on('postgres_changes', 
+                     { event: '*', schema: 'public', table: 'match_holes' },
+                     (payload) => {
+                         console.log('Score change detected:', payload);
+                         // Update local scores array
+                         if (payload.eventType === 'INSERT') {
+                             scores.push(payload.new);
+                         } else if (payload.eventType === 'UPDATE') {
+                             const index = scores.findIndex(s => s.id === payload.new.id);
+                             if (index !== -1) {
+                                 scores[index] = payload.new;
+                             }
+                         } else if (payload.eventType === 'DELETE') {
+                             scores = scores.filter(s => s.id !== payload.old.id);
+                         }
+                         // Re-render the matches
+                         renderMatches();
+                         updateTeamTotals();
+                     }
+                 )
+                 .subscribe();
+
+             // Subscribe to match_players changes (player names/handicaps)
+             supabase
+                 .channel('match_players_changes')
+                 .on('postgres_changes',
+                     { event: '*', schema: 'public', table: 'match_players' },
+                     (payload) => {
+                         console.log('Player change detected:', payload);
+                         // Update local matchPlayers array
+                         if (payload.eventType === 'INSERT') {
+                             matchPlayers.push(payload.new);
+                         } else if (payload.eventType === 'UPDATE') {
+                             const index = matchPlayers.findIndex(mp => mp.id === payload.new.id);
+                             if (index !== -1) {
+                                 matchPlayers[index] = payload.new;
+                             }
+                         } else if (payload.eventType === 'DELETE') {
+                             matchPlayers = matchPlayers.filter(mp => mp.id !== payload.old.id);
+                         }
+                         // Re-render the matches
+                         renderMatches();
+                     }
+                 )
+                 .subscribe();
+
+             // Subscribe to players changes (player names)
+             supabase
+                 .channel('players_changes')
+                 .on('postgres_changes',
+                     { event: '*', schema: 'public', table: 'players' },
+                     (payload) => {
+                         console.log('Player data change detected:', payload);
+                         // Update local players array
+                         if (payload.eventType === 'INSERT') {
+                             players.push(payload.new);
+                         } else if (payload.eventType === 'UPDATE') {
+                             const index = players.findIndex(p => p.id === payload.new.id);
+                             if (index !== -1) {
+                                 players[index] = payload.new;
+                             }
+                         } else if (payload.eventType === 'DELETE') {
+                             players = players.filter(p => p.id !== payload.old.id);
+                         }
+                         // Re-render the matches
+                         renderMatches();
+                     }
+                 )
+                 .subscribe();
          }
          
          // Populate par and handicap headers with database values
@@ -595,7 +686,7 @@
                              </div>
                              <div style="position: relative;">
                                  <input class="hole-input ${princeWinner ? 'winner' : ''}" placeholder="-" value="${princeGross !== null && princeGross !== undefined ? princeGross : ''}" 
-                                        onblur="updateScore('${match.id}', ${hole.hole_number}, '${princeSide}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                        onclick="selectCell(this)" onblur="updateScore('${match.id}', ${hole.hole_number}, '${princeSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${princeGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
                          </td>
@@ -664,7 +755,7 @@
                              </div>
                              <div style="position: relative;">
                                  <input class="hole-input ${bowmanWinner ? 'winner' : ''}" placeholder="-" value="${bowmanGross !== null && bowmanGross !== undefined ? bowmanGross : ''}" 
-                                        onblur="updateScore('${match.id}', ${hole.hole_number}, '${bowmanSide}', this.value)" ${readOnly ? 'disabled' : ''}>
+                                        onclick="selectCell(this)" onblur="updateScore('${match.id}', ${hole.hole_number}, '${bowmanSide}', this.value)" ${readOnly ? 'disabled' : ''}>
                                  ${bowmanGetsStroke ? '<span class="stroke-dot-inline">•</span>' : ''}
                              </div>
                          </td>
@@ -785,6 +876,18 @@
             }
         }
         
+        // Handle cell selection highlighting
+        function selectCell(input) {
+            // Remove selection from all other inputs
+            document.querySelectorAll('.hole-input.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            // Add selection to clicked input
+            input.classList.add('selected');
+            input.focus();
+            input.select(); // Select all text in the input
+        }
+
         // Update score
         async function updateScore(matchId, holeNumber, side, value) {
             if (readOnly) return;
@@ -906,3 +1009,4 @@
     </script>
   </body>
   </html>m th
+  
