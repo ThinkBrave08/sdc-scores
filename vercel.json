@@ -4,9 +4,25 @@
     {
       "src": "index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "victors.mp3",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "wolverines.svg",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/victors.mp3",
+      "dest": "/victors.mp3"
+    },
+    {
+      "src": "/wolverines.svg",
+      "dest": "/wolverines.svg"
+    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
